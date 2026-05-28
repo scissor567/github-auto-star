@@ -116,6 +116,7 @@ async function processUser(octokit, username, options) {
       const already = await isStarred(octokit, repo.owner.login, repo.name);
       if (already) {
         skipped += 1;
+        log("INFO", `Already starred, skipping ${fullName}`);
         continue;
       }
       if (options.dryRun) {
