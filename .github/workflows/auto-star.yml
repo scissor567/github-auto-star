@@ -1,0 +1,46 @@
+name: Auto Star
+
+on:
+  schedule:
+    # 每小时的第 17 分钟执行一次（避开整点高峰，降低排队/抖动）
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只检测不实际 star（true/false）"
+        required: false
+        default: "false"
+
+concurrency:
+  group: auto-star
+  cancel-in-progress: false
+
+jobs:
+  star:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run auto-star
+        env:
+          # GITHUB_TOKEN 没有跨账号 star 权限，必须用 PAT
+          GITHUB_TOKEN_FOR_STAR: ${{ secrets.STAR_TOKEN }}
+          FORCE_DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          if [ "$FORCE_DRY_RUN" = "true" ]; then
+            node -e "const fs=require('fs');const p='users.json';const c=JSON.parse(fs.readFileSync(p,'utf8'));c.options=c.options||{};c.options.dryRun=true;fs.writeFileSync(p,JSON.stringify(c,null,2));"
+          fi
+          node src/index.js

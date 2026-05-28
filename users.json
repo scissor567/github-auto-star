@@ -1,0 +1,10 @@
+{
+  "users": [
+    "octocat"
+  ],
+  "options": {
+    "includeForks": true,
+    "includeArchived": false,
+    "dryRun": false
+  }
+}
